@@ -9,6 +9,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
+COPY --chmod=755 docker-entrypoint.sh /docker-entrypoint.sh
 
 # Run as an unprivileged user
 RUN useradd --create-home appuser
@@ -16,6 +17,5 @@ USER appuser
 
 EXPOSE 8000
 
-# Render (and most PaaS) inject PORT; default to 8000 for local/docker-compose.
-# Boot markers diagnose where startup dies on Render (exit 128 with no logs).
-CMD ["sh", "-c", "echo \"[boot] container started, uid=$(id -u), PORT=${PORT:-unset}\" && python -c 'import app.main' && echo '[boot] app imports OK' && exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# ENTRYPOINT (unlike CMD) cannot be replaced by a PaaS start-command override.
+ENTRYPOINT ["/docker-entrypoint.sh"]
